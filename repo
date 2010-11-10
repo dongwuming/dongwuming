@@ -2,7 +2,8 @@
 
 ## repo default configuration
 ##
-REPO_URL='git://android.git.kernel.org/tools/repo.git'
+#REPO_URL='git://android.git.kernel.org/tools/repo.git'
+REPO_URL='git://code.thunderst.com/tools/repo.git'
 REPO_REV='stable'
 
 # Copyright (C) 2008 Google Inc.
