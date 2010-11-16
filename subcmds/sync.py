@@ -331,7 +331,7 @@ uncommitted changes are present' % project.relpath
       to_fetch.extend(all)
 
       fetched = self._Fetch(to_fetch, opt)
-      _PostRepoFetch(rp, opt.no_repo_verify)
+      _PostRepoFetch(rp)
       if opt.network_only:
         # bail out now; the rest touches the working tree
         return
@@ -386,7 +386,7 @@ def _PostRepoUpgrade(manifest):
     if project.Exists:
       project.PostRepoUpgrade()
 
-def _PostRepoFetch(rp, no_repo_verify=False, verbose=False):
+def _PostRepoFetch(rp, no_repo_verify=True, verbose=False):
   if rp.HasChanges:
     print >>sys.stderr, 'info: A new version of repo is available'
     print >>sys.stderr, ''
