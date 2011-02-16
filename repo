@@ -196,7 +196,7 @@ def _Init(args):
     dst = os.path.abspath(os.path.join(repodir, S_repo))
     _Clone(url, dst, opt.quiet)
 
-    if can_verify and not opt.no_repo_verify:
+    if can_verify and opt.no_repo_verify:
       rev = _Verify(dst, branch, opt.quiet)
     else:
       rev = 'refs/remotes/origin/%s^0' % branch
