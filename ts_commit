@@ -1,0 +1,435 @@
+#!/bin/bash
+
+abs=
+bug=
+bug_id=
+new_feature=
+redmine_feature_id=
+copy=
+copy_from=
+other_info=
+
+
+function echo_red()
+{
+	echo  -en "\\033[2;31m$@\\033[0m"
+}
+
+function echo_red_n()
+{
+	echo  -e "\\033[2;31m$@\\033[0m"
+}
+
+function echo_yellow_n()
+{
+	echo  -e "\\033[2;33m$@\\033[0m"
+}
+function echo_yellow()
+{
+	echo  -en "\\033[2;33m$@\\033[0m"
+}
+
+function abstract()
+{
+while :
+do
+	echo_red "Please enter ABSTRACT(at least 10 characters): "
+#	read line
+#abs=`echo -e "$line " `
+	read abs
+if [ ! -n "$abs" -o ${#abs} -lt 10 ];then
+	continue
+fi
+
+break
+done
+#echo_red $abs
+}
+
+function bugid()
+{
+while :
+do
+	echo_red "Please enter the Bug ID: "
+	read bug_id
+
+#	number=`echo $bug_id|grep "^[0-9]*$"`
+#	if [ ! -n  "$number" ];then
+	if [ ! -n  "$bug_id" ];then
+#		echo_red_n "Please enter a number!"
+		continue
+	fi
+
+break
+done
+}
+
+function bug()
+{
+while :
+do
+	echo_red "Is it a Bug Fix?[Y/N]: "
+	read bug
+	
+	case $bug in
+		[Yy])
+			bug=Y
+			bugid
+			break
+			;;
+		[Nn])
+			bug=N
+			bug_id=
+			break
+			;;
+		*)
+			echo
+			echo_yellow_n "Please enter Y/y or N/n."
+			continue
+			;;
+		esac
+done
+#echo_red $bug
+#echo_red $bug_id
+}
+
+function redminefeature()
+{
+while :
+do
+	echo_red "Please enter the Redmine Feature ID: "
+	read redmine_feature_id
+
+	if [ ! -n "$redmine_feature_id" ];then
+#		echo_red "Please enter a number!"
+		continue
+	fi
+
+break
+done
+}
+
+function newfeature()
+{
+while :
+do
+	echo_red "Is it a New Feature?[Y/N]: "
+	read new_feature
+	
+	case $new_feature in
+		[Yy])
+			new_feature=Y
+			redminefeature
+			break
+			;;
+		[Nn])
+			new_feature=N
+			redmine_feature_id=
+			break
+			;;
+		*)
+			echo
+			echo_yellow_n "Please enter Y/y or N/n."
+			continue
+			;;
+		esac
+done
+
+#echo_red $new_feature
+#echo_red $redmine_feature_id
+}
+
+function checkflag()
+{
+	if [ $bug = N -a $new_feature = N ];then
+		echo_red_n "You don't have a good reason to modify the source code. Exit !"
+		exit
+	fi
+}
+
+function copyfrom()
+{
+while :
+do
+	echo_red "Please enter where you copy from: "
+	read copy_from
+if [ ! -n "$copy_from" ];then
+	continue
+fi
+
+break
+done
+#echo_red $copy_from
+}
+
+
+
+
+function scratch_copy()
+{
+while :
+do
+	echo_red "Is it Scratch or Copy?[S/C]: "
+	read copy
+	
+	case $copy in
+		[Ss])
+			copy=S
+			copy_from=
+			break
+			;;
+		[Cc])
+			copy=C
+			copyfrom
+			break
+			;;
+		*)
+			echo
+			echo_yellow_n "Please enter S/s or C/c."
+			continue
+			;;
+		esac
+done
+#echo_red $copy
+#echo_red $copy_from
+}
+
+function otherinfo()
+{
+while :
+do
+	echo_red_n "Please enter other info(at least 20 characters):"
+	read other_info
+if [ ! -n "$other_info" -o ${#other_info} -lt 20 ];then
+	continue
+fi
+
+break
+done
+#echo_red $other_info
+}
+
+function add_some_files()
+{
+	echo_red_n "Please write the filename(s) you want to add:"
+	read files
+	git add $files
+}
+
+function del_some_files()
+{
+	echo_red_n "Please write the filename(s) you want to delete:"
+	read files
+	git rm $files
+}
+
+function reset_some_files()
+{
+	echo_red_n "Please write the filename(s) you want to reset:"
+	read files
+	git reset HEAD $files
+}
+
+# is it a git repo ?
+function git_repo()
+{
+git status >/dev/null 2>&1 
+if [ $? != 0 ]; then
+	echo_red_n "Not a git repo or other error, exit!"
+	echo_red_n "Please check it again!"
+	exit
+fi
+}
+
+function working_directory()
+{
+	status=`git status |grep "working directory clean"`
+
+	if [ -n "$status" ]; then
+		echo_red_n "It seems your working directory is clean, please modify somefile(s),then run this shell script again!"
+		exit
+	fi
+}
+
+function git_branch()
+{
+	status=`git status |grep "Not currently on any branch."`
+
+	if [ -n "$status" ]; then
+		echo_red_n "You are not on any branch now, please create branch or switch to branch first!"
+		echo_red_n "You can create branch by"
+		echo_yellow_n "repo start --all branchname"
+		echo_red_n "or"
+		echo_yellow_n "git checkout -b branchname"
+		exit
+	fi
+}
+
+function auto_add()
+{
+	add_list=`git status|grep "^#\smodified:" |awk '{print $NF}'`
+	git add $add_list > /dev/null 2>&1
+	del_list=`git status|grep "^#\sdeleted:" |awk '{print $NF}'`
+	git rm $del_list > /dev/null 2>&1
+	
+}
+
+# do you need to modify some files ?
+
+function modify_files()
+{
+while :
+do
+	echo_red_n "Below is your current git status:"
+	git status
+	echo
+	echo_red_n "Please select what you want to do:"
+	echo "		1. add some files(git add)"
+	echo "		2. remove some files(git rm)"
+	echo "		3. unset some files(git reset)"
+	echo "		4. auto add(without Untracked files)"
+	echo "		5. finish"
+	echo_yellow "[1/2/3/4/5] "
+	read add_them
+	case $add_them in
+		[1])
+			add_some_files
+			continue
+			;;
+		[2])
+			del_some_files
+			continue
+			;;
+		[3])
+			reset_some_files
+			continue
+			;;
+		[4])
+			auto_add
+			continue
+			;;
+		[5])
+			break
+			;;
+		*)
+			echo
+			echo_yellow_n "Please enter 1/2/3/4/5"
+			continue
+			;;
+		esac
+done
+}
+
+# is there something need to be commited ?
+
+function need_to_commite()
+{
+status=`git status |grep "Changes to be committed"`
+if [ -n "$status" ]; then
+	echo
+else
+	echo_red_n "It seems there is nothing to be committed, please using \"git status\" to check again!"
+	exit
+fi
+}
+
+# git commit info
+function commit_info()
+{
+while :
+do
+
+MTXT=/tmp/`basename $0`.$$
+
+abstract
+bug
+newfeature
+checkflag
+scratch_copy
+otherinfo
+
+echo
+
+echo "$abs " >> $MTXT
+echo " " >> $MTXT
+echo "Bug Fix [Y/N]: $bug" >> $MTXT
+echo "Bug ID: $bug_id" >> $MTXT
+echo "New Feature [Y/N]: $new_feature" >> $MTXT
+echo "Redmine Feature ID: $redmine_feature_id" >> $MTXT
+echo "Scratch or Copy [S/C]: $copy" >> $MTXT
+echo "Copy from: $copy_from" >> $MTXT
+echo "Other Info: $other_info" >> $MTXT
+
+echo_red_n "Now we get your info as below:"
+echo
+cat $MTXT 
+echo
+
+while :
+do
+echo_red "Are you sure?[Y/N]: "
+read make_sure
+
+	case $make_sure in
+		[Yy])
+			break
+			;;
+		[Nn])
+			break
+			;;
+		*)
+			echo
+			echo_yellow_n "Please enter Y/y or N/n!"
+			continue
+			;;
+	esac
+done
+
+if [ $make_sure = Y -o $make_sure = y ];then
+	break
+fi
+
+if [ $make_sure = N -o $make_sure = n ];then
+	rm -fr $MTXT
+	continue
+fi
+
+done
+
+git commit -F $MTXT
+rm -fr $MTXT
+}
+
+
+# is it need to repo upload ?
+function need_repo_upload()
+{
+while :
+do
+echo_red "Do you want to upload your commit to gerrit?[Y/N]: "
+read repo_upload
+	case $repo_upload in
+		[Yy])
+			repo upload ./
+			break
+			;;
+		[Nn])
+			break
+			;;
+		*)
+			echo
+			echo_yellow_n "Please enter Y/y or N/n."
+			continue
+			;;
+	esac
+done
+}
+
+
+git_repo
+working_directory
+git_branch
+modify_files
+need_to_commite
+commit_info
+need_repo_upload
