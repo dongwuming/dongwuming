@@ -259,8 +259,8 @@ function git_branch()
 		echo_red_n "You are not on any branch now, please create branch or switch to branch first!"
 		echo_red_n "You can create branch by"
 		echo_yellow_n "repo start --all branchname"
-		echo_red_n "or"
-		echo_yellow_n "git checkout -b branchname"
+#		echo_red_n "or"
+#		echo_yellow_n "git checkout -b branchname"
 		exit
 	fi
 }
