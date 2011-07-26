@@ -68,11 +68,16 @@ function bug()
 {
 while :
 do
-	echo_red "Is it a Bug Fix?[Y/N]: "
+	echo_red "Is it a Bug Fix?(Y/N) [Y]: "
 	read bug
 	
 	case $bug in
 		[Yy])
+			bug=Y
+			bugid
+			break
+			;;
+		'')
 			bug=Y
 			bugid
 			break
@@ -113,11 +118,16 @@ function newfeature()
 {
 while :
 do
-	echo_red "Is it a New Feature?[Y/N]: "
+	echo_red "Is it a New Feature?(Y/N) [Y]: "
 	read new_feature
 	
 	case $new_feature in
 		[Yy])
+			new_feature=Y
+			redminefeature
+			break
+			;;
+		'')
 			new_feature=Y
 			redminefeature
 			break
@@ -169,11 +179,16 @@ function scratch_copy()
 {
 while :
 do
-	echo_red "Is it Scratch or Copy?[S/C]: "
+	echo_red "Is it Scratch or Copy?(S/C) [S]: "
 	read copy
 	
 	case $copy in
 		[Ss])
+			copy=S
+			copy_from=
+			break
+			;;
+		'')
 			copy=S
 			copy_from=
 			break
@@ -289,7 +304,7 @@ do
 	echo "		3. unset some files(git reset)"
 	echo "		4. auto add(without Untracked files)"
 	echo "		5. finish"
-	echo_yellow "[1/2/3/4/5] "
+	echo_yellow "(1/2/3/4/5) [4] "
 	read add_them
 	case $add_them in
 		[1])
@@ -305,6 +320,10 @@ do
 			continue
 			;;
 		[4])
+			auto_add
+			continue
+			;;
+		'')
 			auto_add
 			continue
 			;;
@@ -367,14 +386,20 @@ echo
 
 while :
 do
-echo_red "Are you sure?[Y/N]: "
+	echo_red "Are you sure?(Y/N) [Y]: "
 read make_sure
 
 	case $make_sure in
 		[Yy])
+			make_sure=Y
+			break
+			;;
+		'')
+			make_sure=Y
 			break
 			;;
 		[Nn])
+			make_sure=N
 			break
 			;;
 		*)
@@ -396,7 +421,12 @@ fi
 
 done
 
-git commit -F $MTXT
+if [ -n "$fan_rewrite" ];then
+	git commit --amend -F $MTXT
+else
+	git commit -F $MTXT
+fi
+
 rm -fr $MTXT
 }
 
@@ -406,14 +436,21 @@ function need_repo_upload()
 {
 while :
 do
-echo_red "Do you want to upload your commit to gerrit?[Y/N]: "
+	echo_red "Do you want to upload your commit to gerrit?(Y/N) [Y]: "
 read repo_upload
 	case $repo_upload in
 		[Yy])
+			repo_upload=Y
+			repo upload ./
+			break
+			;;
+		'')
+			repo_upload=Y
 			repo upload ./
 			break
 			;;
 		[Nn])
+			repo_upload=N
 			break
 			;;
 		*)
@@ -425,11 +462,132 @@ read repo_upload
 done
 }
 
+# is it need to repo upload your amend?
+function need_repo_upload_amend()
+{
+	while :
+	do
+		echo_red "Do you want to upload your commit to gerrit replace the last one?(Y/N) [Y]: "
+		read repo_upload_amend
+		case $repo_upload_amend in
+			[Yy])
+				repo_upload_amend=Y
+				repo upload --replace ./
+				break
+				;;  
+			'')
+				repo_upload_amend=Y
+				repo upload --replace ./
+				break
+				;;  
+			[Nn])
+				repo_upload_amend=N
+				break
+				;;  
+			*)  
+				echo
+				echo_yellow_n "Please enter Y/y or N/n."
+				continue
+				;;  
+			esac
+	done
+}
+
+
+function git_amend()
+{
+	echo_red_n "Your latest git log is:"
+	git log -n1
+	
+	while :
+	do
+		echo_red_n "Do you need to rewrite the log? "
+		echo "      1. not rewirte."
+		echo "      2. rewrite"
+		echo_yellow "(1/2) [1]:"
+		read rewrite
+
+		case $rewrite in
+			[2])
+				rewrite=2
+				fan_rewrite=1
+				need_to_commite
+				commit_info
+				unset fan_rewrite
+				break
+				;;
+			[1])
+				rewrite=1
+				thunderst=/tmp/thunderst.$$
+				git log -1 |grep -v ^commit|grep -v ^Author:|grep -v ^Date:|grep -v "^    Change-Id" > $thunderst
+				git commit --amend -F $thunderst
+				rm -fr $thunderst
+				break
+				;;
+			'')
+				rewrite=1
+				thunderst=/tmp/thunderst.$$
+				git log -1 |grep -v ^commit|grep -v ^Author:|grep -v ^Date:|grep -v "^    Change-Id" > $thunderst
+				git commit --amend -F $thunderst
+				rm -fr $thunderst
+				break
+				;;
+			*)
+				echo
+				echo_yellow_n "Please enter 1 or 2."
+				continue
+				;;
+		esac
+	done
+
+}
+
+#commit_or_amend
+function commit_or_amend()
+{
+	while :
+	do
+		echo_red_n "Please select what you want to do: "
+		echo "      1. just commit(git commit)"
+		echo "      2. amend last commit(git commit --amend)"
+		echo_yellow "(1/2) [1]: "
+		read amend_or_not
+
+		case $amend_or_not in
+			[1])
+				amend_or_not=1
+				need_to_commite
+				commit_info
+				need_repo_upload
+				break
+				;;
+			'')
+				amend_or_not=1
+				need_to_commite
+				commit_info
+				need_repo_upload
+				break
+				;;
+			[2])
+				amend_or_not=2
+				git_amend
+				need_repo_upload_amend
+				break
+				;;
+			*)
+				echo
+				echo_yellow_n "Please enter 1 or 2."
+				continue
+				;;
+		esac
+	done
+}
 
 git_repo
 working_directory
 git_branch
 modify_files
-need_to_commite
-commit_info
-need_repo_upload
+commit_or_amend
+#need_to_commite
+#commit_info
+#need_repo_upload
