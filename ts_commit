@@ -213,11 +213,22 @@ function otherinfo()
 {
 while :
 do
+	OTHER_FILE=/tmp/ts_commit_test.$$
+	touch $OTHER_FILE
 	echo_red_n "Please enter other info(at least 20 characters):"
-	read other_info
-if [ ! -n "$other_info" -o ${#other_info} -lt 20 ];then
-	continue
-fi
+	while read t
+	do
+		if [ ! -n "$t" ];then
+			break
+		fi
+		echo $t >> $OTHER_FILE
+	done
+	total_char=`cat $OTHER_FILE |wc -c`
+	
+	if [ $total_char -lt 20 ];then
+		rm -fr $OTHER_FILE
+		continue
+	fi
 
 break
 done
@@ -377,7 +388,7 @@ echo "New Feature [Y/N]: $new_feature" >> $MTXT
 echo "Redmine Feature ID: $redmine_feature_id" >> $MTXT
 echo "Scratch or Copy [S/C]: $copy" >> $MTXT
 echo "Copy from: $copy_from" >> $MTXT
-echo "Other Info: $other_info" >> $MTXT
+echo "Other Info: `cat $OTHER_FILE`" >> $MTXT
 
 echo_red_n "Now we get your info as below:"
 echo
@@ -427,7 +438,7 @@ else
 	git commit -F $MTXT
 fi
 
-rm -fr $MTXT
+rm -fr $MTXT $OTHER_FILE
 }
 
 
