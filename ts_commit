@@ -272,8 +272,11 @@ function working_directory()
 	status=`git status |grep "working directory clean"`
 
 	if [ -n "$status" ]; then
-		echo_red_n "It seems your working directory is clean, please modify somefile(s),then run this shell script again!"
-		exit
+#		echo_red_n "It seems your working directory is clean, please modify somefile(s),then run this shell script again!"
+		work_dir_clean=1
+#		exit
+	else
+		work_dir_clean=0
 	fi
 }
 
@@ -349,6 +352,41 @@ do
 		esac
 done
 }
+
+# your working directory is clean, what you want to do?
+function not_modify_files()
+{
+while :
+do
+	echo_red_n "Your working directory is CLEAN now!"
+	echo_red_n "Please select what you want to do:"
+	echo "		1. Exit now, I will modify source code later!"
+	echo "		2. Just amend LATEST git log info (git commit --amend will only amend the latest git log info)"
+	echo_yellow "(1/2) [1] "
+	read add_them
+	case $add_them in
+		[1])
+			exit
+			;;
+		'')
+			exit
+			;;
+		2)
+			fan_rewrite=1
+			commit_info
+			need_repo_upload_amend
+			exit
+			;;
+		*)
+			echo
+			echo_yellow_n "Please enter 1/2"
+			echo
+			continue
+			;;
+		esac
+done
+}
+
 
 # is there something need to be commited ?
 
@@ -595,10 +633,16 @@ function commit_or_amend()
 }
 
 git_repo
-working_directory
 git_branch
-modify_files
-commit_or_amend
+working_directory
+if [ $work_dir_clean = 0 ];then
+	modify_files
+	commit_or_amend
+
+else
+	not_modify_files
+fi
+
 #need_to_commite
 #commit_info
 #need_repo_upload
