@@ -161,6 +161,7 @@ later is required to fix a server side protocol bug.
           fetched.add(project.gitdir)
         else:
           print >>sys.stderr, 'error: Cannot fetch %s' % project.name
+          opt.force_broken = True
           if opt.force_broken:
             print >>sys.stderr, 'warn: --force-broken, continuing to sync'
           else:
