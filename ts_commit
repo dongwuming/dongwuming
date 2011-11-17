@@ -471,6 +471,8 @@ fi
 done
 
 if [ -n "$fan_rewrite" ];then
+	echo " " >> $MTXT
+	echo `git log | grep Change-Id: 2>/dev/null | head -n1` >> $MTXT
 	git commit --amend -F $MTXT
 else
 	git commit -F $MTXT
@@ -521,12 +523,12 @@ function need_repo_upload_amend()
 		case $repo_upload_amend in
 			[Yy])
 				repo_upload_amend=Y
-				repo upload --replace ./
+				repo upload  ./
 				break
 				;;  
 			'')
 				repo_upload_amend=Y
-				repo upload --replace ./
+				repo upload  ./
 				break
 				;;  
 			[Nn])
@@ -569,6 +571,8 @@ function git_amend()
 				rewrite=1
 				thunderst=/tmp/thunderst.$$
 				git log -1 |grep -v ^commit|grep -v ^Author:|grep -v ^Date:|grep -v "^    Change-Id" > $thunderst
+				echo " " >> $thunderst
+				echo `git log | grep Change-Id: 2>/dev/null | head -n1` >> $thunderst
 				git commit --amend -F $thunderst
 				rm -fr $thunderst
 				break
@@ -577,6 +581,8 @@ function git_amend()
 				rewrite=1
 				thunderst=/tmp/thunderst.$$
 				git log -1 |grep -v ^commit|grep -v ^Author:|grep -v ^Date:|grep -v "^    Change-Id" > $thunderst
+				echo " " >> $thunderst
+				echo `git log | grep Change-Id: 2>/dev/null | head -n1` >> $thunderst
 				git commit --amend -F $thunderst
 				rm -fr $thunderst
 				break
