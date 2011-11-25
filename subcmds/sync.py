@@ -151,14 +151,14 @@ later is required to fix a server side protocol bug.
       sem.release()
 
   def _Fetch(self, projects, opt):
-    fetched = []
+    fetched = set()
     pm = Progress('Fetching projects', len(projects))
 
     if self.jobs == 1:
       for project in projects:
         pm.update()
         if project.Sync_NetworkHalf(quiet=opt.quiet):
-          fetched.append(project)
+          fetched.add(project.gitdir)
         else:
           print >>sys.stderr, 'error: Cannot fetch %s' % project.name
           opt.force_broken = True
@@ -361,8 +361,8 @@ uncommitted changes are present' % project.relpath
 
     syncbuf = SyncBuffer(mp.config,
                          detach_head = opt.detach_head)
-    pm = Progress('Syncing work tree', len(fetched))
-    for project in fetched:
+    pm = Progress('Syncing work tree', len(all))
+    for project in all:
       pm.update()
       if project.worktree:
         project.Sync_LocalHalf(syncbuf)
