@@ -192,7 +192,22 @@ later is required to fix a server side protocol bug.
 
   def UpdateProjectList(self):
     new_project_paths = []
-    for project in self.manifest.projects.values():
+#    for project in self.manifest.projects.values():
+    a = self.manifest.projects
+    dp = os.path.join(self.manifest.repodir, '.denied.list')
+    if os.path.isfile(dp):
+      try:
+        f = open(dp, 'r')
+        fl = f.read().split('\n')
+      except IOError:
+        sys.exit(1)
+      finally:
+        f.close()
+      for l in fl:
+        if l in a.keys():
+          del a[l]
+    all = a.values()
+    for project in all:
       if project.relpath:
         new_project_paths.append(project.relpath)
     file_name = 'project.list'
@@ -322,7 +337,7 @@ uncommitted changes are present' % project.relpath
       if not syncbuf.Finish():
         sys.exit(1)
       self.manifest._Unload()
-    all = self.GetProjects(args, missing_ok=True)
+    all = self.GetProjects(args, missing_ok=True, sync=False)
 
     if not opt.local_only:
       to_fetch = []
@@ -345,7 +360,7 @@ uncommitted changes are present' % project.relpath
         _ReloadManifest(self)
         mp = self.manifest.manifestProject
 
-        all = self.GetProjects(args, missing_ok=True)
+        all = self.GetProjects(args, missing_ok=True, sync=False)
         missing = []
         for project in all:
           if project.gitdir not in fetched:
@@ -355,9 +370,42 @@ uncommitted changes are present' % project.relpath
     if self.manifest.IsMirror:
       # bail out now, we have no working tree
       return
+    dp = os.path.join(self.manifest.repodir, '.denied.list')
+    df = os.path.join(self.manifest.repodir, '.deny.list')
+    if os.path.isfile(df):
+      try:
+        f = open(df, 'r')
+        fl = f.read().split('\n')
+        an = {}
+        for a in all: an[a.name] = a
+        for l in fl:
+          if l in an.keys():
+            del an[l]
+        all = an.values()
+      except IOError:
+        sys.exit(1)
+      finally:
+        f.close()
+        os.rename(df, dp)
+    else:
+      if os.path.isfile(dp): os.remove(dp)
 
     if self.UpdateProjectList():
       sys.exit(1)
+
+    if opt.local_only and os.path.isfile(dp):
+      try:
+        f = open(dp, 'r')
+        fl = f.read().split('\n')
+      except IOError:
+        sys.exit(1)
+      finally:
+        f.close()
+      an = {}
+      for a in all: an[a.name] = a
+      for l in fl:
+        if l in an.keys(): del an[l]
+      all = an.values()
 
     syncbuf = SyncBuffer(mp.config,
                          detach_head = opt.detach_head)

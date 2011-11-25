@@ -742,6 +742,10 @@ class Project(object):
       return
 
     upstream_gain = self._revlist(not_rev(HEAD), revid)
+    if upstream_gain:
+      def _doshow():
+        self._Showcomments(upstream_gain)
+      syncbuf.later1(self, _doshow)
     pub = self.WasPublished(branch.name, all)
     if pub:
       not_merged = self._revlist(not_rev(revid), pub)
@@ -1100,6 +1104,8 @@ class Project(object):
     ok = GitCommand(self,
                     cmd,
                     bare = True,
+                    capture_stdout = True,
+                    capture_stderr = True,
                     ssh_proxy = ssh_proxy).Wait() == 0
 
     if initial:
@@ -1142,6 +1148,12 @@ class Project(object):
     cmd = ['merge', head]
     if GitCommand(self, cmd).Wait() != 0:
       raise GitError('%s merge %s ' % (self.name, head))
+  def _Showcomments(self, upstream):
+    if upstream:
+      for com in upstream:
+        cmd = ['show', '-s', '--format=%ce%n%cd%n%s%n%b--', com]
+        if GitCommand(self, cmd).Wait() != 0:
+          raise GitError('%s show comments faild ' % self.name)
 
   def _InitGitDir(self):
     if not os.path.exists(self.gitdir):
@@ -1505,8 +1517,10 @@ class _Later(object):
 
   def Run(self, syncbuf):
     out = syncbuf.out
+    out.flush()
     out.project('project %s/', self.project.relpath)
     out.nl()
+    out.flush()
     try:
       self.action()
       out.nl()
@@ -1530,7 +1544,7 @@ class SyncBuffer(object):
     self._later_queue2 = []
 
     self.out = _SyncColoring(config)
-    self.out.redirect(sys.stderr)
+    self.out.redirect(sys.stdout)
 
     self.detach_head = detach_head
     self.clean = True

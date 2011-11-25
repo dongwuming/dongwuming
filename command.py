@@ -67,10 +67,21 @@ class Command(object):
                                        reparse=reparse,
                                        type=type)
 
-  def GetProjects(self, args, missing_ok=False):
+  def GetProjects(self, args, missing_ok=False, sync=True):
     """A list of projects that match the arguments.
     """
     all = self.manifest.projects
+    if sync:
+      df = os.path.join(self.manifest.repodir, '.denied.list')
+      if os.path.isfile(df):
+        try:
+          f = open(df,'r')
+          fl = f.read().split('\n')
+          for k in all.keys():
+            if k in fl:
+              del all[k]
+        finally:
+           f.close()
 
     mp = self.manifest.manifestProject
     if mp.relpath == '.':

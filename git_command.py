@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import re
 import sys
 import subprocess
 import tempfile
@@ -150,6 +151,7 @@ class GitCommand(object):
         cwd = project.worktree
       if not gitdir:
         gitdir = project.gitdir
+      self.project = project
 
     command = [GIT]
     if bare:
@@ -232,6 +234,17 @@ class GitCommand(object):
 
     if p.stderr:
       self.stderr = p.stderr.read()
+      if re.search('DENIED\s+', self.stderr):
+        df = os.path.join(self.project.manifest.repodir, '.deny.list')
+        try:
+          f = open(df, 'a')
+          f.write(self.project.name)
+          f.write('\n')
+        except IOError:
+          sys.exit(1)
+        finally:
+          f.close()
+        return 0
       p.stderr.close()
     else:
       p.stderr = None
