@@ -201,8 +201,7 @@ later is required to fix a server side protocol bug.
         fl = f.read().split('\n')
       except IOError:
         sys.exit(1)
-      finally:
-        f.close()
+      f.close()
       for l in fl:
         if l in a.keys():
           del a[l]
@@ -384,9 +383,8 @@ uncommitted changes are present' % project.relpath
         all = an.values()
       except IOError:
         sys.exit(1)
-      finally:
-        f.close()
-        os.rename(df, dp)
+      f.close()
+      os.rename(df, dp)
     else:
       if os.path.isfile(dp): os.remove(dp)
 
@@ -399,8 +397,7 @@ uncommitted changes are present' % project.relpath
         fl = f.read().split('\n')
       except IOError:
         sys.exit(1)
-      finally:
-        f.close()
+      f.close()
       an = {}
       for a in all: an[a.name] = a
       for l in fl:

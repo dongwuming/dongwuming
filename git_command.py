@@ -242,8 +242,7 @@ class GitCommand(object):
           f.write('\n')
         except IOError:
           sys.exit(1)
-        finally:
-          f.close()
+        f.close()
         return 0
       p.stderr.close()
     else:
