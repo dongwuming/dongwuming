@@ -1104,7 +1104,6 @@ class Project(object):
     ok = GitCommand(self,
                     cmd,
                     bare = True,
-                    capture_stdout = True,
                     capture_stderr = True,
                     ssh_proxy = ssh_proxy).Wait() == 0
 
