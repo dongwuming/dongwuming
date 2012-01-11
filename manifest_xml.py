@@ -329,7 +329,12 @@ class XmlManifest(Manifest):
         name = m_url[len(url):]
 
     if name is None:
-      s = m_url.rindex('/') + 1
+      try:
+        s = m_url.rindex('/') + 1
+      except ValueError:
+      #if there is no '/', we must use such format like user@IP:manifest
+      #then we can check ':' instead of '/'
+        s = m_url.rindex(':') + 1
       remote = _XmlRemote('origin', m_url[:s])
       name = m_url[s:]
 
