@@ -416,6 +416,7 @@ def _open_ssh(host, port=None):
     # We will make two calls to ssh; this is the common part of both calls.
     command_base = ['ssh',
                      '-o','ControlPath %s' % ssh_sock(),
+                     '-o','StrictHostKeyChecking=no',
                      host]
     if port is not None:
       command_base[1:1] = ['-p',str(port)]
