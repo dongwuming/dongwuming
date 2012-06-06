@@ -204,9 +204,12 @@ class _CopyFile:
           os.remove(dest)
         else:
           dir = os.path.dirname(dest)
-          if not os.path.isdir(dir):
-            os.makedirs(dir)
-        shutil.copy(src, dest)
+          if os.path.isdir(src):
+            shutil.copytree(src, dest)
+          else:
+            if not os.path.isdir(dir):
+              os.makedirs(dir)
+            shutil.copy(src, dest)
         # make the file read-only
         mode = os.stat(dest)[stat.ST_MODE]
         mode = mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
