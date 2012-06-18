@@ -200,16 +200,19 @@ class _CopyFile:
     if not os.path.exists(dest) or not filecmp.cmp(src, dest):
       try:
         # remove existing file first, since it might be read-only
-        if os.path.exists(dest):
-          os.remove(dest)
+        if os.path.isdir(src):
+          if os.path.exists(dest):
+            os.chmod(dest, 0755)
+            shutil.rmtree(dest)
+          shutil.copytree(src, dest)
         else:
-          dir = os.path.dirname(dest)
-          if os.path.isdir(src):
-            shutil.copytree(src, dest)
+          if os.path.exists(dest):
+            os.remove(dest)
           else:
+            dir = os.path.dirname(dest)
             if not os.path.isdir(dir):
               os.makedirs(dir)
-            shutil.copy(src, dest)
+          shutil.copy(src, dest)
         # make the file read-only
         mode = os.stat(dest)[stat.ST_MODE]
         mode = mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
